@@ -1,4 +1,4 @@
-# 💰 Smart Expense Tracker with AI Insights
+# 💰 💰 Ledger - Smart Expense Tracker with AI Insights
 
 A full-stack expense management web application built with **Java Spring Boot** that helps users track daily expenses, visualize spending patterns, and receive **AI-powered financial insights** using Groq's Llama 3.3 model.
 
@@ -7,6 +7,7 @@ A full-stack expense management web application built with **Java Spring Boot** 
 ## 🚀 Features
 
 - **Add & manage expenses** with flexible categories (preset + custom)
+- **Google login** — each user sees only their own data
 - **Monthly / Yearly toggle** — filter expenses by month or full year
 - **Analytics dashboard** — total spent, transactions, avg per transaction, top category, highest spending day, vs last month comparison
 - **Interactive charts** — pie chart for category breakdown, bar chart for monthly trend
@@ -22,6 +23,7 @@ A full-stack expense management web application built with **Java Spring Boot** 
 | Backend | Java 17, Spring Boot 4.0.6, Spring Data JPA |
 | Database | MySQL |
 | Frontend | HTML, CSS, Vanilla JavaScript |
+| Auth | Spring Security + Google OAuth2 |
 | Charts | Chart.js |
 | AI | Groq API (Llama 3.3-70B) |
 | Architecture | MVC — Controller → Service → Repository |
@@ -55,8 +57,8 @@ A full-stack expense management web application built with **Java Spring Boot** 
 
 **1. Clone the repository**
 ```bash
-git clone https://github.com/Krshm10/Smart-expense-tracker.git
-cd Smart-expense-tracker
+git clone https://github.com/Krshm10/Ledger.git
+cd Ledger
 ```
 
 **2. Create MySQL database**
@@ -81,6 +83,7 @@ groq.api.key=YOUR_GROQ_API_KEY
 server.port=8080
 spring.web.resources.static-locations=classpath:/static/
 ```
+**Google OAuth setup:** console.cloud.google.com → APIs & Services → Credentials → Create OAuth client ID (Web application). Add the redirect URI `http://localhost:8080/login/oauth2/code/google`, then paste the client ID and secret into application.properties.
 
 **4. Run the application**
 ```bash
