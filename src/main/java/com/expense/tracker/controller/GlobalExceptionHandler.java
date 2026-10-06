@@ -17,4 +17,9 @@ public class GlobalExceptionHandler {
                 .forEach(f -> errors.put(f.getField(), f.getDefaultMessage()));
         return ResponseEntity.badRequest().body(errors);
     }
+    
+    @ExceptionHandler(java.time.DateTimeException.class)
+    public ResponseEntity<Map<String, String>> handleBadDate(java.time.DateTimeException ex) {
+        return ResponseEntity.badRequest().body(Map.of("error", "Invalid year or month"));
+    }
 }

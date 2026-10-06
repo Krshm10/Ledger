@@ -477,6 +477,7 @@
             box.classList.remove('hidden');
             box.innerHTML = 'Analyzing your expenses with AI...';
             const res = await authFetch(`${BASE}/insights`);
+            if (res.status === 429) { box.textContent = 'Please wait 30 seconds before requesting again.'; return; }
             const text = await res.text();
             box.innerHTML = esc(text).replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
         }

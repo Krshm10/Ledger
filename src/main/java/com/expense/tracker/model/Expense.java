@@ -1,18 +1,24 @@
 package com.expense.tracker.model;
-import jakarta.validation.constraints.*;
+
 import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
+
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Entity
-@Table(name = "expenses")
+@Table(name = "expenses", indexes = @Index(name = "idx_expense_user_date", columnList = "user_id, date"))
 public class Expense {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotNull
     @Positive
-    private double amount;
+    @Digits(integer = 10, fraction = 2)
+    @Column(precision = 12, scale = 2)
+    private BigDecimal amount;
 
     @NotBlank
     @Size(max = 50)
@@ -25,8 +31,9 @@ public class Expense {
     private String description;
 
     // Which user this expense belongs to. Every read/write in
-    // ExpenseService now filters or sets this, so one account
+    // ExpenseService filters or sets this, so one account
     // never sees another account's expenses.
+    @Column(name = "user_id")
     private Long userId;
 
     public Long getId() {
@@ -37,11 +44,11 @@ public class Expense {
         this.id = id;
     }
 
-    public double getAmount() {
+    public BigDecimal getAmount() {
         return amount;
     }
 
-    public void setAmount(double amount) {
+    public void setAmount(BigDecimal amount) {
         this.amount = amount;
     }
 
