@@ -194,10 +194,20 @@
     </div>
 
     <script>
-        const BASE = 'http://localhost:8080/api';
+        const BASE = '/api';
         let pieChart = null, barChart = null;
         let currentView = 'monthly';
         let editingId = null;
+        let expenseCache = {};
+            function esc(s) {
+                return String(s ?? '').replace(/[&<>"']/g,
+                    c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+            }
+
+        function csrfToken() {
+            const m = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
+            return m ? decodeURIComponent(m[1]) : '';
+        }
 
         const monthNames = ['', 'January', 'February', 'March', 'April', 'May', 'June',
             'July', 'August', 'September', 'October', 'November', 'December'];
@@ -208,6 +218,7 @@
         // every request below. If a request ever comes back 401, the
         // session has expired, so we just send the user back to login.
         async function authFetch(url, options = {}) {
+            options.headers = { ...(options.headers || {}), 'X-XSRF-TOKEN': csrfToken() };
             const res = await fetch(url, options);
             if (res.status === 401) {
                 window.location.href = 'login.html';
@@ -216,8 +227,9 @@
             return res;
         }
 
-        function logout() {
-            window.location.href = '/logout';
+        async function logout() {
+            await fetch('/logout', { method: 'POST', headers: { 'X-XSRF-TOKEN': csrfToken() } });
+            window.location.href = 'login.html';
         }
 
         async function loadUserChip() {
@@ -340,7 +352,7 @@
       </div>
       <div class="stat-card highlight">
         <span class="stat-label">Top Category</span>
-        <span class="stat-value" style="font-size:17px">${a.highestCategory}</span>
+        <span class="stat-value" style="font-size:17px">${esc(a.highestCategory)}</span>
       </div>
       <div class="stat-card">
         <span class="stat-label">Highest Spending Day</span>
@@ -362,18 +374,20 @@
             const url = editingId ? `${BASE}/expenses/${editingId}` : `${BASE}/expenses`;
             const method = editingId ? 'PUT' : 'POST';
 
-            await authFetch(url, {
+            const res = await authFetch(url, {
                 method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ amount, category, date, description })
             });
+            if (!res.ok) { alert('Invalid expense. Check amount, category and date.'); return; }
 
             resetForm();
             loadFiltered();
             switchSection('history');
         }
 
-        function editExpense(id, expense) {
+        function editExpense(id) {
+            const expense = expenseCache[id];
             editingId = id;
             switchSection('add');
             document.getElementById('amount').value = expense.amount;
@@ -433,17 +447,19 @@
                 return;
             }
 
+            expenseCache = {};
             expenses.forEach(e => {
+                expenseCache[e.id] = e;
                 total += e.amount;
                 tbody.innerHTML += `
         <tr>
-          <td><b>₹${e.amount}</b></td>
-          <td><span class="badge" style="${getBadgeColor(e.category)}">${e.category}</span></td>
-          <td>${e.date}</td>
-          <td>${e.description || '-'}</td>
+          <td><b>₹${esc(e.amount)}</b></td>
+          <td><span class="badge" style="${getBadgeColor(e.category)}">${esc(e.category)}</span></td>
+          <td>${esc(e.date)}</td>
+          <td>${esc(e.description) || '-'}</td>
           <td>
-            <button class="edit-btn" onclick='editExpense(${e.id}, ${JSON.stringify(e)})'>Edit</button>
-            <button class="del-btn" onclick="deleteExpense(${e.id})">Delete</button>
+            <button class="edit-btn" onclick="editExpense(${Number(e.id)})">Edit</button>
+            <button class="del-btn" onclick="deleteExpense(${Number(e.id)})">Delete</button>
           </td>
         </tr>`;
             });
@@ -462,7 +478,7 @@
             box.innerHTML = 'Analyzing your expenses with AI...';
             const res = await authFetch(`${BASE}/insights`);
             const text = await res.text();
-            box.innerHTML = text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
+            box.innerHTML = esc(text).replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
         }
 
         function updatePieChart(expenses) {
