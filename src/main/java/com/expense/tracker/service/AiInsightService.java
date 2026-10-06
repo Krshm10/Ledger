@@ -14,32 +14,31 @@ public class AiInsightService {
     @Value("${groq.api.key}")
     private String apiKey;
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate = buildTemplate();
+
+    private static RestTemplate buildTemplate() {
+        var f = new org.springframework.http.client.SimpleClientHttpRequestFactory();
+        f.setConnectTimeout(java.time.Duration.ofSeconds(5));
+        f.setReadTimeout(java.time.Duration.ofSeconds(20));
+        return new RestTemplate(f);
+    }
 
     public String getInsights(List<Expense> expenses) {
 
         StringBuilder summary = new StringBuilder();
         summary.append(
-                "Analyze these expenses and give spending patterns, overspent category, and 2 savings tips:\\n\\n");
+                "Analyze these expenses and give spending patterns, overspent category, and 2 savings tips:\\n\n");
 
         for (Expense e : expenses) {
             summary.append(e.getCategory())
                     .append(" - Rs.").append(e.getAmount())
                     .append(" on ").append(e.getDate())
-                    .append(" (").append(e.getDescription()).append(")\\n");
+                    .append(" (").append(e.getDescription()).append(")\n");
         }
 
-        String requestBody = """
-                {
-                 "model": "llama-3.3-70b-versatile",
-                  "messages": [
-                    {
-                      "role": "user",
-                      "content": "%s"
-                    }
-                  ]
-                }
-                """.formatted(summary.toString());
+        Map<String, Object> body = Map.of(
+                "model", "llama-3.3-70b-versatile",
+                "messages", List.of(Map.of("role", "user", "content", summary.toString())));
 
         String url = "https://api.groq.com/openai/v1/chat/completions";
 
@@ -47,7 +46,7 @@ public class AiInsightService {
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBearerAuth(apiKey);
 
-        HttpEntity<String> entity = new HttpEntity<>(requestBody, headers);
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
 
         try {
             ResponseEntity<Map> response = restTemplate.postForEntity(url, entity, Map.class);
@@ -55,7 +54,7 @@ public class AiInsightService {
             var message = (Map) choices.get(0).get("message");
             return (String) message.get("content");
         } catch (Exception e) {
-            return "AI insights unavailable: " + e.getMessage();
+            return "AI insights are temporarily unavailable. Please try again.";
         }
     }
 }
