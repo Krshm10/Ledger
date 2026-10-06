@@ -11,15 +11,8 @@
 	<groupId>com.expense</groupId>
 	<artifactId>tracker</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name/>
-	<description/>
-	<url/>
-	<licenses>
-		<license/>
-	</licenses>
-	<developers>
-		<developer/>
-	</developers>
+	<name>Ledger</name>
+<description>Expense tracker with AI insights</description>
 	<scm>
 		<connection/>
 		<developerConnection/>
