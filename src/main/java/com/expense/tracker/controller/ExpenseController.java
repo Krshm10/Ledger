@@ -1,5 +1,6 @@
 package com.expense.tracker.controller;
 
+import jakarta.validation.Valid;
 import com.expense.tracker.model.Expense;
 import com.expense.tracker.model.User;
 import com.expense.tracker.repository.UserRepository;
@@ -44,7 +45,7 @@ public class ExpenseController {
     }
 
     @PostMapping("/expenses")
-    public Expense addExpense(@RequestBody Expense expense, @AuthenticationPrincipal OAuth2User principal) {
+    public Expense addExpense(@Valid @RequestBody Expense expense, @AuthenticationPrincipal OAuth2User principal) {
         return service.addExpense(expense, currentUserId(principal));
     }
 
@@ -81,7 +82,7 @@ public class ExpenseController {
     }
 
     @PutMapping("/expenses/{id}")
-    public Expense updateExpense(@PathVariable Long id, @RequestBody Expense updatedExpense,
+    public Expense updateExpense(@PathVariable Long id, @Valid @RequestBody Expense updatedExpense,
             @AuthenticationPrincipal OAuth2User principal) {
         return service.updateExpense(id, updatedExpense, currentUserId(principal));
     }

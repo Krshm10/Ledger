@@ -19,6 +19,7 @@ public class ExpenseService {
     private AiInsightService aiInsightService;
 
     public Expense addExpense(Expense expense, Long userId) {
+        expense.setId(null); // client must never choose the row id
         expense.setUserId(userId);
         return repo.save(expense);
     }
@@ -124,7 +125,10 @@ public class ExpenseService {
         List<Expense> all = repo.findByUserId(userId);
         if (all.isEmpty())
             return "Add some expenses first!";
-        return aiInsightService.getInsights(all);
+        List<Expense> recent = all.stream()
+                .sorted(Comparator.comparing(Expense::getDate).reversed())
+                .limit(100).toList();
+        return aiInsightService.getInsights(recent);
     }
     
     public Expense updateExpense(Long id, Expense updatedExpense, Long userId) {

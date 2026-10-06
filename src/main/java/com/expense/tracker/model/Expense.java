@@ -1,5 +1,5 @@
 package com.expense.tracker.model;
-
+import jakarta.validation.constraints.*;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 
@@ -11,9 +11,17 @@ public class Expense {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Positive
     private double amount;
+
+    @NotBlank
+    @Size(max = 50)
     private String category;
+
+    @NotNull
     private LocalDate date;
+
+    @Size(max = 255)
     private String description;
 
     // Which user this expense belongs to. Every read/write in
