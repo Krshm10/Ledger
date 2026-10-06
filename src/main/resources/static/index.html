@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ledger</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <div class="shell">
+
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-mark">₹</div>
+                <div class="brand-text">
+                    <h1>Ledger</h1>
+                    <span>Personal expenses</span>
+                </div>
+            </div>
+
+            <nav class="nav">
+                <button class="nav-item active" data-section="overview" onclick="switchSection('overview')">
+                    <span class="ic">◱</span> Overview
+                </button>
+                <button class="nav-item" data-section="add" onclick="switchSection('add')">
+                    <span class="ic">＋</span> Add Expense
+                </button>
+                <button class="nav-item" data-section="history" onclick="switchSection('history')">
+                    <span class="ic">☰</span> History
+                </button>
+                <button class="nav-item" data-section="insights" onclick="switchSection('insights')">
+                    <span class="ic">✦</span> AI Insights
+                </button>
+            </nav>
+
+            <div class="sidebar-foot">
+                <div class="user-chip">
+                    <div class="user-avatar" id="user-avatar">–</div>
+                    <div class="user-meta">
+                        <div class="name" id="user-name">Guest</div>
+                        <div class="role">Signed in</div>
+                    </div>
+                    <button class="logout-btn" title="Log out" onclick="logout()">⏻</button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN -->
+        <main class="main">
+
+            <!-- ===== OVERVIEW ===== -->
+            <section class="section active" id="section-overview">
+                <div class="topbar">
+                    <div>
+                        <h2>Overview</h2>
+                        <div class="sub" id="overview-sub">Your spending at a glance</div>
+                    </div>
+                    <div class="toggle-row">
+                        <button class="toggle-btn active" id="btn-monthly" onclick="switchView('monthly')">Monthly</button>
+                        <button class="toggle-btn" id="btn-yearly" onclick="switchView('yearly')">Yearly</button>
+                        <select id="year-select" onchange="loadFiltered()">
+                            <option value="2026">2026</option>
+                            <option value="2025">2025</option>
+                            <option value="2024">2024</option>
+                        </select>
+                        <select id="month-select" onchange="loadFiltered()">
+                            <option value="1">January</option>
+                            <option value="2">February</option>
+                            <option value="3">March</option>
+                            <option value="4">April</option>
+                            <option value="5">May</option>
+                            <option value="6">June</option>
+                            <option value="7">July</option>
+                            <option value="8">August</option>
+                            <option value="9">September</option>
+                            <option value="10">October</option>
+                            <option value="11">November</option>
+                            <option value="12">December</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="stats-grid" id="stats-grid"></div>
+
+                <div class="charts-row">
+                    <div class="panel chart-card">
+                        <h3>Spending by Category</h3>
+                        <canvas id="pieChart" width="260" height="260"></canvas>
+                    </div>
+                    <div class="panel chart-card" id="bar-card" style="display:none">
+                        <h3>Monthly Trend</h3>
+                        <canvas id="barChart" width="260" height="260"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ===== ADD EXPENSE ===== -->
+            <section class="section" id="section-add">
+                <div class="topbar">
+                    <div>
+                        <h2>Add Expense</h2>
+                        <div class="sub">Log a new entry to your ledger</div>
+                    </div>
+                </div>
+
+                <div class="ledger-card">
+                    <h3>New entry</h3>
+                    <p class="ledger-sub">Fill in the details below — required fields are amount and date.</p>
+
+                    <div class="form-row">
+                        <div class="field">
+                            <label>Amount (₹)</label>
+                            <input type="number" id="amount" placeholder="0.00" />
+                        </div>
+                        <div class="field">
+                            <label>Category</label>
+                            <select id="category" onchange="handleCategoryChange()">
+                                <option>Food</option>
+                                <option>Travel</option>
+                                <option>Shopping</option>
+                                <option>Bills</option>
+                                <option>Entertainment</option>
+                                <option>Grocery</option>
+                                <option>Health</option>
+                                <option>Education</option>
+                                <option>Other (type below)</option>
+                            </select>
+                            <input type="text" id="custom-category" placeholder="Type custom category..." class="hidden" style="margin-top:6px" />
+                        </div>
+                        <div class="field">
+                            <label>Date</label>
+                            <input type="date" id="date" />
+                        </div>
+                        <div class="field" style="flex:1.6">
+                            <label>Description</label>
+                            <input type="text" id="description" placeholder="What was this for?" />
+                        </div>
+                    </div>
+
+                    <div class="form-actions" style="margin-top:18px">
+                        <button id="submit-btn" class="btn-primary" onclick="addExpense()">Add Expense</button>
+                        <button id="cancel-edit-btn" class="btn-ghost hidden" onclick="cancelEdit()">Cancel</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ===== HISTORY ===== -->
+            <section class="section" id="section-history">
+                <div class="topbar">
+                    <div>
+                        <h2>History</h2>
+                        <div class="sub" id="history-sub">All logged expenses</div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <h3 id="table-heading">Expenses</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Amount</th>
+                                <th>Category</th>
+                                <th>Date</th>
+                                <th>Description</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="expense-body"></tbody>
+                    </table>
+                    <p id="total"></p>
+                </div>
+            </section>
+
+            <!-- ===== AI INSIGHTS ===== -->
+            <section class="section" id="section-insights">
+                <div class="topbar">
+                    <div>
+                        <h2>AI Insights</h2>
+                        <div class="sub">Patterns and savings tips from your spending</div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <button class="ai-btn" onclick="getInsights()">Generate AI Insights</button>
+                    <div id="insights-box" class="insights-box hidden"></div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <script>
+        const BASE = 'http://localhost:8080/api';
+        let pieChart = null, barChart = null;
+        let currentView = 'monthly';
+        let editingId = null;
+
+        const monthNames = ['', 'January', 'February', 'March', 'April', 'May', 'June',
+            'July', 'August', 'September', 'October', 'November', 'December'];
+
+        // ---- auth ----
+        // No token to manage here — the browser's session cookie (set by
+        // Spring Security after Google login) is sent automatically with
+        // every request below. If a request ever comes back 401, the
+        // session has expired, so we just send the user back to login.
+        async function authFetch(url, options = {}) {
+            const res = await fetch(url, options);
+            if (res.status === 401) {
+                window.location.href = 'login.html';
+                throw new Error('Session expired');
+            }
+            return res;
+        }
+
+        function logout() {
+            window.location.href = '/logout';
+        }
+
+        async function loadUserChip() {
+            try {
+                const res = await authFetch(`${BASE}/me`);
+                const me = await res.json();
+                const name = me.name || me.email || 'Guest';
+                document.getElementById('user-name').textContent = name;
+                document.getElementById('user-avatar').textContent = name.charAt(0).toUpperCase();
+            } catch (e) {
+                // authFetch already redirects to login on a 401
+            }
+        }
+
+        // ---- section switching (sidebar tabs) ----
+        function switchSection(name) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById('section-' + name).classList.add('active');
+            document.querySelectorAll('.nav-item').forEach(b => b.classList.toggle('active', b.dataset.section === name));
+        }
+
+        const now = new Date();
+        window.onload = () => {
+            loadUserChip();
+            document.getElementById('month-select').value = now.getMonth() + 1;
+            document.getElementById('year-select').value = now.getFullYear();
+            loadFiltered();
+        };
+
+        function handleCategoryChange() {
+            const sel = document.getElementById('category').value;
+            const custom = document.getElementById('custom-category');
+            if (sel === 'Other (type below)') {
+                custom.classList.remove('hidden');
+            } else {
+                custom.classList.add('hidden');
+                custom.value = '';
+            }
+        }
+
+        function getFinalCategory() {
+            const sel = document.getElementById('category').value;
+            if (sel === 'Other (type below)') {
+                const custom = document.getElementById('custom-category').value.trim();
+                return custom || 'Other';
+            }
+            return sel;
+        }
+
+        function switchView(view) {
+            currentView = view;
+            document.getElementById('btn-monthly').classList.toggle('active', view === 'monthly');
+            document.getElementById('btn-yearly').classList.toggle('active', view === 'yearly');
+            document.getElementById('month-select').style.display = view === 'monthly' ? 'inline-block' : 'none';
+            loadFiltered();
+        }
+
+        async function loadFiltered() {
+            const year = document.getElementById('year-select').value;
+            const month = document.getElementById('month-select').value;
+
+            const heading = currentView === 'monthly'
+                ? `${monthNames[parseInt(month)]} ${year} Expenses`
+                : `${year} Expenses`;
+            document.getElementById('table-heading').textContent = heading;
+            document.getElementById('overview-sub').textContent = heading;
+            document.getElementById('history-sub').textContent = heading;
+
+            const url = currentView === 'monthly'
+                ? `${BASE}/expenses/monthly?year=${year}&month=${month}`
+                : `${BASE}/expenses/yearly?year=${year}`;
+
+            const res = await authFetch(url);
+            const expenses = await res.json();
+            renderTable(expenses);
+            updatePieChart(expenses);
+
+            const aUrl = currentView === 'monthly'
+                ? `${BASE}/analysis?year=${year}&month=${month}`
+                : `${BASE}/analysis?year=${year}`;
+
+            const aRes = await authFetch(aUrl);
+            const analysis = await aRes.json();
+            renderAnalysis(analysis);
+
+            if (currentView === 'yearly' && analysis.monthlyTotals) {
+                document.getElementById('bar-card').style.display = 'flex';
+                updateBarChart(analysis.monthlyTotals);
+            } else {
+                document.getElementById('bar-card').style.display = 'none';
+            }
+        }
+
+        function renderAnalysis(a) {
+            if (a.message) {
+                document.getElementById('stats-grid').innerHTML =
+                    `<div class="stat-card"><span class="stat-label">Status</span><span class="stat-value" style="font-size:15px">${a.message}</span></div>`;
+                return;
+            }
+
+            const vsLastMonth = a.comparedToLastMonth
+                ? `<div class="stat-card ${a.comparedToLastMonth.startsWith('+') ? 'danger' : 'success'}">
+          <span class="stat-label">vs Last Month</span>
+          <span class="stat-value" style="font-size:15px">${a.comparedToLastMonth}</span>
+          <span class="stat-sub">Last month: ₹${Number(a.lastMonthTotal).toFixed(0)}</span>
+         </div>` : '';
+
+            document.getElementById('stats-grid').innerHTML = `
+      <div class="stat-card">
+        <span class="stat-label">Total Spent</span>
+        <span class="stat-value">₹${Number(a.totalSpent).toFixed(0)}</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Transactions</span>
+        <span class="stat-value">${a.totalTransactions}</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Avg per Transaction</span>
+        <span class="stat-value">₹${Number(a.averagePerTransaction).toFixed(0)}</span>
+      </div>
+      <div class="stat-card highlight">
+        <span class="stat-label">Top Category</span>
+        <span class="stat-value" style="font-size:17px">${a.highestCategory}</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Highest Spending Day</span>
+        <span class="stat-value" style="font-size:15px">${a.highestSpendingDay}</span>
+        <span class="stat-sub">₹${Number(a.highestSpendingDayAmount).toFixed(0)}</span>
+      </div>
+      ${vsLastMonth}
+    `;
+        }
+
+        async function addExpense() {
+            const amount = document.getElementById('amount').value;
+            const category = getFinalCategory();
+            const date = document.getElementById('date').value;
+            const description = document.getElementById('description').value;
+
+            if (!amount || !date) { alert('Please enter amount and date'); return; }
+
+            const url = editingId ? `${BASE}/expenses/${editingId}` : `${BASE}/expenses`;
+            const method = editingId ? 'PUT' : 'POST';
+
+            await authFetch(url, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ amount, category, date, description })
+            });
+
+            resetForm();
+            loadFiltered();
+            switchSection('history');
+        }
+
+        function editExpense(id, expense) {
+            editingId = id;
+            switchSection('add');
+            document.getElementById('amount').value = expense.amount;
+            document.getElementById('date').value = expense.date;
+            document.getElementById('description').value = expense.description || '';
+
+            const categorySelect = document.getElementById('category');
+            const knownCategories = Array.from(categorySelect.options).map(o => o.value);
+            if (knownCategories.includes(expense.category)) {
+                categorySelect.value = expense.category;
+                document.getElementById('custom-category').classList.add('hidden');
+            } else {
+                categorySelect.value = 'Other (type below)';
+                document.getElementById('custom-category').value = expense.category;
+                document.getElementById('custom-category').classList.remove('hidden');
+            }
+
+            document.getElementById('submit-btn').textContent = 'Update Expense';
+            document.getElementById('cancel-edit-btn').classList.remove('hidden');
+        }
+
+        function cancelEdit() {
+            resetForm();
+        }
+
+        function resetForm() {
+            editingId = null;
+            document.getElementById('amount').value = '';
+            document.getElementById('description').value = '';
+            document.getElementById('custom-category').value = '';
+            document.getElementById('submit-btn').textContent = 'Add Expense';
+            document.getElementById('cancel-edit-btn').classList.add('hidden');
+        }
+
+        function getBadgeColor(category) {
+            const colors = {
+                'food': 'background:#402a26;color:#e8a98f',
+                'travel': 'background:#1f2c40;color:#8fb4e8',
+                'shopping': 'background:#40391f;color:#e8d18f',
+                'bills': 'background:#2c3f34;color:#8fe8b8',
+                'entertainment': 'background:#33264a;color:#c9a2f0',
+                'grocery': 'background:#2c3f26;color:#a9e88f',
+                'health': 'background:#402626;color:#e88f8f',
+                'education': 'background:#1f3640;color:#8fd4e8',
+            };
+            return colors[category.toLowerCase()] || 'background:#242b38;color:#9aa1b2';
+        }
+
+        function renderTable(expenses) {
+            const tbody = document.getElementById('expense-body');
+            tbody.innerHTML = '';
+            let total = 0;
+
+            if (expenses.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:#8b93a3;padding:24px">No expenses for this period yet</td></tr>`;
+                document.getElementById('total').textContent = '';
+                return;
+            }
+
+            expenses.forEach(e => {
+                total += e.amount;
+                tbody.innerHTML += `
+        <tr>
+          <td><b>₹${e.amount}</b></td>
+          <td><span class="badge" style="${getBadgeColor(e.category)}">${e.category}</span></td>
+          <td>${e.date}</td>
+          <td>${e.description || '-'}</td>
+          <td>
+            <button class="edit-btn" onclick='editExpense(${e.id}, ${JSON.stringify(e)})'>Edit</button>
+            <button class="del-btn" onclick="deleteExpense(${e.id})">Delete</button>
+          </td>
+        </tr>`;
+            });
+
+            document.getElementById('total').textContent = `Total Spent: ₹${total.toFixed(2)}`;
+        }
+
+        async function deleteExpense(id) {
+            await authFetch(`${BASE}/expenses/${id}`, { method: 'DELETE' });
+            loadFiltered();
+        }
+
+        async function getInsights() {
+            const box = document.getElementById('insights-box');
+            box.classList.remove('hidden');
+            box.innerHTML = 'Analyzing your expenses with AI...';
+            const res = await authFetch(`${BASE}/insights`);
+            const text = await res.text();
+            box.innerHTML = text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
+        }
+
+        function updatePieChart(expenses) {
+            const categoryMap = {};
+            expenses.forEach(e => {
+                categoryMap[e.category] = (categoryMap[e.category] || 0) + e.amount;
+            });
+            const labels = Object.keys(categoryMap);
+            const data = Object.values(categoryMap);
+            const colors = ['#c9a227', '#4fa97e', '#c15b44', '#8fb4e8', '#c9a2f0', '#e8d18f', '#8fe8b8', '#e8a98f'];
+
+            if (pieChart) pieChart.destroy();
+            pieChart = new Chart(document.getElementById('pieChart'), {
+                type: 'pie',
+                data: { labels, datasets: [{ data, backgroundColor: colors.slice(0, labels.length), borderColor: '#1b2029', borderWidth: 2 }] },
+                options: {
+                    responsive: false,
+                    plugins: { legend: { labels: { color: '#ece7da', font: { family: 'Space Grotesk' } } } }
+                }
+            });
+        }
+
+        function updateBarChart(monthlyTotals) {
+            const labels = Object.keys(monthlyTotals);
+            const data = Object.values(monthlyTotals);
+            if (barChart) barChart.destroy();
+            barChart = new Chart(document.getElementById('barChart'), {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [{ label: 'Monthly Spending (₹)', data, backgroundColor: '#c9a227', borderRadius: 6 }]
+                },
+                options: {
+                    responsive: false,
+                    scales: {
+                        y: { beginAtZero: true, ticks: { color: '#9aa1b2' }, grid: { color: '#2c3242' } },
+                        x: { ticks: { color: '#9aa1b2' }, grid: { display: false } }
+                    },
+                    plugins: { legend: { labels: { color: '#ece7da', font: { family: 'Space Grotesk' } } } }
+                }
+            });
+        }
+    </script>
+</body>
+
+</html>
