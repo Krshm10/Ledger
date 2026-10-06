@@ -494,6 +494,8 @@ button:active { transform: scale(0.97); }
     color: #d6ede1;
 }
 
+#insights-box p { margin: 0 0 12px; }
+
 /* ============ TABLE ============ */
 table { width: 100%; border-collapse: collapse; }
 

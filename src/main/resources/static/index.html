@@ -204,6 +204,15 @@
                     c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
             }
 
+        function formatInsight(text) {
+            return esc(text)
+                .replace(/^#{1,6}\s*(.*)$/gm, '<b>$1</b>')
+                .replace(/^\s*[-*_]{3,}\s*$/gm, '')
+                .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
+                .replace(/\n{2,}/g, '</p><p>')
+                .replace(/\n/g, '<br>');
+        }
+
         function csrfToken() {
             const m = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
             return m ? decodeURIComponent(m[1]) : '';
@@ -479,7 +488,7 @@
             const res = await authFetch(`${BASE}/insights`);
             if (res.status === 429) { box.textContent = 'Please wait 30 seconds before requesting again.'; return; }
             const text = await res.text();
-            box.innerHTML = esc(text).replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
+            box.innerHTML = '<p>' + formatInsight(text) + '</p>';
         }
 
         function updatePieChart(expenses) {
